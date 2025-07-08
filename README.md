@@ -1,6 +1,6 @@
 # x-band_reciver
 
-## Installing normal Docker
+## Installing PyBOMBS Docker
 ---
 
 ### Build
