@@ -45,13 +45,12 @@ RUN git clone --branch maint-3.8 --single-branch --depth 1 \
      -DENABLE_GR_QTGUI=ON \
      -DENABLE_GRC=ON \
      -DENABLE_GRC_DOCS=OFF \
- && make -j$(nproc) && make install \
+ && make -j$(nproc) \
+ && make install \
  && ldconfig \
+ # после установки GNU Radio заводим swig-файлы в заголовки:
+ && ln -s /usr/share/gnuradio/swig /usr/include/gnuradio/swig \
  && rm -rf /tmp/gnuradio
-
-# 3.1 Устанавливаем dev‑заголовки и SWIG‑файлы GNU Radio
-RUN apt-get update && apt-get install -y gnuradio-dev \
- && ln -s /usr/share/gnuradio/swig /usr/include/gnuradio/swig
 
 # 4. Сборка gr-iio (IIO blocks)
 RUN git clone https://github.com/analogdevicesinc/gr-iio.git /tmp/gr-iio \
