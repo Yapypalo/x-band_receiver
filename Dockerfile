@@ -43,6 +43,7 @@ RUN git clone --branch maint-3.8 --single-branch --depth 1 \
      -DENABLE_GR_SWIG=ON \
      -DENABLE_SWIG=ON \
      -DENABLE_GR_QTGUI=ON \
+     -DENABLE_GR_IIO=ON \
      -DENABLE_GRC=ON \
      -DENABLE_GRC_DOCS=OFF \
  && make -j$(nproc) \
@@ -52,23 +53,6 @@ RUN git clone --branch maint-3.8 --single-branch --depth 1 \
  && ln -s /usr/share/gnuradio/swig /usr/include/gnuradio/swig \
  && rm -rf /tmp/gnuradio
 
-# 4. Сборка gr-iio (IIO blocks)
-RUN git clone https://github.com/analogdevicesinc/gr-iio.git /tmp/gr-iio \
- && cd /tmp/gr-iio \
- && python3 -m lib2to3 -w python \
- && mkdir build && cd build \
- && cmake .. \
-     -DCMAKE_INSTALL_PREFIX=/usr \
-     -DENABLE_PYTHON=ON \
-     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-     -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.8.so \
-     -DPYTHON_INCLUDE_DIRS=/usr/include/python3.8 \
-     -DIIO_INCLUDE_DIRS=/usr/include \
-     -DIIO_LIBRARIES=/usr/lib/x86_64-linux-gnu/libiio.so \
-     -DGNURADIO_SWIG_DIR=/usr/include/gnuradio/swig \
-     -DGNURADIO_RUNTIME_INCLUDE_DIRS=/usr/include/gnuradio \
- && make -j$(nproc) && make install && ldconfig \
- && rm -rf /tmp/gr-iio
 
 # 5. gr-dslwp с правками для SWIG
 RUN git clone --branch maint-3.8 https://github.com/bg2bhc/gr-dslwp.git /tmp/gr-dslwp \
