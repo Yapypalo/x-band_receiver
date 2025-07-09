@@ -32,6 +32,7 @@ RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 RUN git clone --branch maint-3.8 --single-branch --depth 1 \
       --recurse-submodules https://github.com/gnuradio/gnuradio.git /tmp/gnuradio \
  && cd /tmp/gnuradio \
+ && git fetch --tags \
  && git checkout v3.8.5.0 \
  && git submodule update --init --recursive \
  && mkdir build && cd build \
