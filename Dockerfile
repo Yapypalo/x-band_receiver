@@ -28,46 +28,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Устанавливаем python3.8 как default python3
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
 
-# 3. Сборка GNU Radio 3.8.0.5
+# 3. Сборка GNU Radio 3.8.5.0
 RUN git clone --branch maint-3.8 --single-branch --depth 1 \
-    --recurse-submodules  https://github.com/gnuradio/gnuradio.git /tmp/gnuradio \
+      --recurse-submodules https://github.com/gnuradio/gnuradio.git /tmp/gnuradio \
  && cd /tmp/gnuradio \
- && git fetch --tags \
  && git checkout v3.8.5.0 \
  && git submodule update --init --recursive \
  && mkdir build && cd build \
  && cmake .. \
-	-DCMAKE_BUILD_TYPE=Release \
-	-DCMAKE_INSTALL_PREFIX=/usr \
-	-DENABLE_PYTHON=ON \
-	-DENABLE_GR_SWIG=ON \
-	-DENABLE_SWIG=ON \
-	-DENABLE_GR_QTGUI=ON \
-	-DENABLE_GRC=ON \
-	-DENABLE_GRC_DOCS=OFF \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DCMAKE_INSTALL_PREFIX=/usr \
+     -DENABLE_PYTHON=ON \
+     -DENABLE_GR_SWIG=ON \
+     -DENABLE_SWIG=ON \
+     -DENABLE_GR_QTGUI=ON \
+     -DENABLE_GRC=ON \
+     -DENABLE_GRC_DOCS=OFF \
  && make -j$(nproc) && make install \
  && ldconfig \
  && rm -rf /tmp/gnuradio
 
-# Устанавливаем gr-iio (IIO blocks)
+# 3.1 Устанавливаем dev‑заголовки и SWIG‑файлы GNU Radio
+RUN apt-get update && apt-get install -y gnuradio-dev \
+ && ln -s /usr/share/gnuradio/swig /usr/include/gnuradio/swig
+
+# 4. Сборка gr-iio (IIO blocks)
 RUN git clone https://github.com/analogdevicesinc/gr-iio.git /tmp/gr-iio \
  && cd /tmp/gr-iio \
-    # конвертим питон-скрипты в Python3
  && python3 -m lib2to3 -w python \
  && mkdir build && cd build \
-    #  задаём CXXFLAGS и SWIG_FLAGS в окружении, чтобы добавить include‑пути
- && CXXFLAGS="-I/usr/include/gnuradio -I/usr/include/gnuradio/swig" \
-    SWIG_FLAGS="-I/usr/include/gnuradio/swig" \
-    cmake .. \
-      -DCMAKE_INSTALL_PREFIX=/usr \
-      -DENABLE_PYTHON=ON \
-      -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-      -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.8.so \
-      -DPYTHON_INCLUDE_DIRS=/usr/include/python3.8 \
-      -DIIO_INCLUDE_DIRS=/usr/include \
-      -DIIO_LIBRARIES=/usr/lib/x86_64-linux-gnu/libiio.so \
-      -DGNURADIO_SWIG_DIR=/usr/include/gnuradio/swig \
-      -DGNURADIO_RUNTIME_INCLUDE_DIRS=/usr/include/gnuradio \
+ && cmake .. \
+     -DCMAKE_INSTALL_PREFIX=/usr \
+     -DENABLE_PYTHON=ON \
+     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+     -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.8.so \
+     -DPYTHON_INCLUDE_DIRS=/usr/include/python3.8 \
+     -DIIO_INCLUDE_DIRS=/usr/include \
+     -DIIO_LIBRARIES=/usr/lib/x86_64-linux-gnu/libiio.so \
+     -DGNURADIO_SWIG_DIR=/usr/include/gnuradio/swig \
+     -DGNURADIO_RUNTIME_INCLUDE_DIRS=/usr/include/gnuradio \
  && make -j$(nproc) && make install && ldconfig \
  && rm -rf /tmp/gr-iio
 
