@@ -3,13 +3,16 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    LANG=C.UTF-8
+    LANG=C.UTF-8 \
+    XDG_RUNTIME_DIR=/tmp/runtime-root \
+    LIBGL_ALWAYS_SOFTWARE=1
 
-# 1. Устанавливаем зависимости
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 1. Устанавливаем зависимости + дополнительные утилиты
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
     build-essential cmake git wget pkg-config \
     python3.8 python3.8-dev python3-pip python3-numpy python3-mako python3-click python3-click-plugins \
-    python3-six libvolk2-dev\
+    python3-six libvolk2-dev \
     libboost-all-dev libgmp-dev libmpfr-dev libusb-1.0-0-dev \
     libcomedi-dev libsdl1.2-dev libfftw3-dev libcppunit-dev libgsl-dev \
     libqt5gui5 python3-pyqt5 python3-pyqt5.qtsvg python3-gi python3-gi-cairo \
@@ -18,11 +21,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libaio-dev liblog4cpp5-dev \
     python2 python2-dev libpython2.7 libpython2.7-dev \
     python3-yaml gir1.2-gtk-3.0 gir1.2-pango-1.0 python3-gi-cairo \
-    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio\
-    libqt5gui5 libqt5core5a libqt5widgets5 \
-    qttools5-dev qttools5-dev-tools \
-    libqt5svg5-dev \
-    python3-pyqt5 python3-pyqt5.qtsvg libqwt-qt5-6 libqwt-qt5-dev\
+    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio \
+    libqt5core5a libqt5widgets5 qttools5-dev qttools5-dev-tools \
+    libgl1-mesa-glx libnss-mdns avahi-daemon iputils-ping nano xterm \
+    libqt5svg5-dev libqwt-qt5-6 libqwt-qt5-dev \
  && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем python3.8 как default python3
@@ -89,7 +91,7 @@ RUN git clone --branch maint-3.8 https://github.com/bg2bhc/gr-dslwp.git /tmp/gr-
  && ldconfig \
  && rm -rf /tmp/gr-dslwp
 
-ENV PYTHONPATH="/usr/local/lib/python3/dist-packages:${PYTHONPATH}"
+ENV PYTHONPATH="/usr/local/lib/python3/dist-packages"
 # 6. gr-gpredict-doppler (зависимость для gr-lilacsat)
 RUN git clone https://github.com/wnagele/gr-gpredict-doppler.git /tmp/gr-gpredict-doppler \
  && cd /tmp/gr-gpredict-doppler \
@@ -117,16 +119,8 @@ RUN git clone https://github.com/bg2bhc/gr-lilacsat.git /tmp/gr-lilacsat \
 # 8. Чистим кеш и готово
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-RUN set -eux; \
-    for P in /usr/local/lib/python3.8/dist-packages /usr/lib/python3/dist-packages; do \
-      if [ -d "$P" ]; then \
-        mkdir -p "$P/gnuradio"; \
-        echo 'from pkgutil import extend_path\npath = extend_path(path, name)' > "$P/gnuradio/init.py"; \
-        echo 'from dslwp import *' > "$P/gnuradio/dslwp.py"; \
-        echo 'from gnuradio.dslwp import *' > "$P/dslwp.py"; \
-        break; \
-      fi; \
-    done
+RUN mkdir -p /root/.gnuradio/prefs \
+ && touch /root/.gnuradio/prefs/vmcircbuf_default_factory
 
 WORKDIR /workspace
-CMD ["/bin/bash"]
+ENTRYPOINT ["bash", "-lc", "avahi-daemon --daemonize --no-chroot; exec bash"]
