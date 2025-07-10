@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzstd-dev libavahi-client-dev libavahi-common-dev bison flex \
     libaio-dev liblog4cpp5-dev \
     python2 python2-dev libpython2.7 libpython2.7-dev \
-    python3-yaml gir1.2-gtk-3.0 gir1.2-pango-1.0 python3-gi-cairo \
-    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio \
+    python3-yaml gir1.2-gtk-3.0 gir1.2-pango-1.0 python3-gi-cairo  gnuradio-dev \
+    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio gr-iio\
     libqt5gui5 libqt5core5a libqt5widgets5 \
     qttools5-dev qttools5-dev-tools \
     libqt5svg5-dev \
