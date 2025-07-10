@@ -89,6 +89,7 @@ RUN git clone --branch maint-3.8 https://github.com/bg2bhc/gr-dslwp.git /tmp/gr-
  && ldconfig \
  && rm -rf /tmp/gr-dslwp
 
+ENV PYTHONPATH="/usr/local/lib/python3/dist-packages:${PYTHONPATH}"
 # 6. gr-gpredict-doppler (зависимость для gr-lilacsat)
 RUN git clone https://github.com/wnagele/gr-gpredict-doppler.git /tmp/gr-gpredict-doppler \
  && cd /tmp/gr-gpredict-doppler \
@@ -115,6 +116,17 @@ RUN git clone https://github.com/bg2bhc/gr-lilacsat.git /tmp/gr-lilacsat \
 
 # 8. Чистим кеш и готово
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+    for P in /usr/local/lib/python3.8/dist-packages /usr/lib/python3/dist-packages; do \
+      if [ -d "$P" ]; then \
+        mkdir -p "$P/gnuradio"; \
+        echo 'from pkgutil import extend_path\npath = extend_path(path, name)' > "$P/gnuradio/init.py"; \
+        echo 'from dslwp import *' > "$P/gnuradio/dslwp.py"; \
+        echo 'from gnuradio.dslwp import *' > "$P/dslwp.py"; \
+        break; \
+      fi; \
+    done
 
 WORKDIR /workspace
 CMD ["/bin/bash"]
