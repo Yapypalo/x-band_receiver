@@ -17,8 +17,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzstd-dev libavahi-client-dev libavahi-common-dev bison flex \
     libaio-dev liblog4cpp5-dev \
     python2 python2-dev libpython2.7 libpython2.7-dev \
-    python3-yaml gir1.2-gtk-3.0 gir1.2-pango-1.0 python3-gi-cairo  gnuradio-dev \
-    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio gr-iio\
+    python3-yaml gir1.2-gtk-3.0 gir1.2-pango-1.0 python3-gi-cairo \
+    python3-pyqtgraph python3-matplotlib libad9361-dev libiio-dev python3-libiio\
     libqt5gui5 libqt5core5a libqt5widgets5 \
     qttools5-dev qttools5-dev-tools \
     libqt5svg5-dev \
@@ -43,16 +43,35 @@ RUN git clone --branch maint-3.8 --single-branch --depth 1 \
      -DENABLE_GR_SWIG=ON \
      -DENABLE_SWIG=ON \
      -DENABLE_GR_QTGUI=ON \
-     -DENABLE_GR_IIO=ON \
      -DENABLE_GRC=ON \
      -DENABLE_GRC_DOCS=OFF \
  && make -j$(nproc) \
  && make install \
  && ldconfig \
- # после установки GNU Radio заводим swig-файлы в заголовки:
- && ln -s /usr/share/gnuradio/swig /usr/include/gnuradio/swig \
  && rm -rf /tmp/gnuradio
 
+# Собираем gr-iio для GNURadio 3.8.5.0
+RUN git clone --branch upgrade-3.8-merge \
+      --depth 1 https://github.com/analogdevicesinc/gr-iio.git /tmp/gr-iio \
+ && cd /tmp/gr-iio \
+ # конвертим скрипты на Python3
+ && python3 -m lib2to3 -w python \
+ # патчим имя сигнального источника
+ && sed -i 's|<gnuradio/analog/sig_source_f.h>|<gnuradio/analog/sig_source.h>|g' \
+      lib/iio_math_impl.cc lib/iio_math_gen_impl.cc \
+ && mkdir build && cd build \
+ && cmake .. \
+      -DCMAKE_INSTALL_PREFIX=/usr \
+      -DENABLE_PYTHON=ON \
+      -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+      -DPYTHON_LIBRARIES=/usr/lib/x86_64-linux-gnu/libpython3.8.so \
+      -DPYTHON_INCLUDE_DIRS=/usr/include/python3.8 \
+      -DIIO_INCLUDE_DIRS=/usr/include \
+      -DIIO_LIBRARIES=/usr/lib/x86_64-linux-gnu/libiio.so \
+      -DGNURADIO_SWIG_DIR=/usr/include/gnuradio/swig \
+      -DGNURADIO_RUNTIME_INCLUDE_DIRS=/usr/include/gnuradio \
+ && make -j$(nproc) && make install && ldconfig \
+ && rm -rf /tmp/gr-iio
 
 # 5. gr-dslwp с правками для SWIG
 RUN git clone --branch maint-3.8 https://github.com/bg2bhc/gr-dslwp.git /tmp/gr-dslwp \
